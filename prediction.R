@@ -40,7 +40,7 @@ for (i in 1:price_len-1){
   percent_change[i] = (close[i] - close[i+1])/close[i+1]
 }
 percent_change = rev(percent_change)
-plot(dates[2:price_len], percent_change*100, 'l', col=3)
+plot(dates[2:price_len], percent_change*100, 'l', col=3, xlab="Time", ylab="Percent Change")
 
 # Stats of Percentage Change
 price_mean = mean(percent_change)
