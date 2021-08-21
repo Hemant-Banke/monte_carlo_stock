@@ -13,7 +13,7 @@
 
 ### Comparing Portfolio performance against Nifty
 We first get the last one year closing prices for all stocks in Portfolio. 
-![Image for All Stocks](https://github.com/Hemant-Banke/monte_carlo_stock/blob/main/img/plot_stocks_data.png?raw=true)
+![Image for All Stocks](https://github.com/Hemant-Banke/monte_carlo_stock/blob/main/img/plot_stocks_data?raw=true)
 
 
 This is used to calculate Portfolio value in last one year. Comparing this value to Nifty's last year performance we get
@@ -41,6 +41,7 @@ The portfolio value is then calculated giving us the expected path for portfolio
 We generate prediction for Nifty similarly and compare the two expected paths.
 ![Predicted performance of Portfolio v/s Nifty](https://github.com/Hemant-Banke/monte_carlo_stock/blob/main/img/plot_pred_portfolio_nifty.png?raw=true)
 
-
+If Amount **100** is invested in the Portfolio and Nifty it may be **105.0995** in Portfolio and **102.1087** in Nifty 
+within next 20days.
 
 
