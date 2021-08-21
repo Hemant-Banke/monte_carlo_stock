@@ -46,5 +46,5 @@ within next 20days.
 
 
 ### Resources
-- [Monte Carlo Simulation in R with focus on Option Pricing](http://github.cohttps://towardsdatascience.com/monte-carlo-simulation-in-r-with-focus-on-financial-data-ad43e2a4aedf)
+- [Monte Carlo Simulation in R with focus on Option Pricing](https://towardsdatascience.com/monte-carlo-simulation-in-r-with-focus-on-financial-data-ad43e2a4aedf)
 - [Monte Carlo Simulation in Finance and Risk Management](https://www.mygreatlearning.com/blog/monte-carlo-simulation-in-finance-risk-management/)

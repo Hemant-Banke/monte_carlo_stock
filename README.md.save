@@ -1,0 +1,9 @@
+# Simulating and Comparing Portfolio with Nifty
+
+### Aim :
+1. To Compare one year performance of a Portfolio with Nifty
+2. Using Monte Carlo Simulation to predict individual stock prices 20 days ahead
+3. Compare Predicted Portfolio performance with Nifty
+
+### Instructions :
+Subscribe to Yahoo Finance API in R 
