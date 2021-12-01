@@ -1,24 +1,19 @@
 # AIM :
 # Predict Return of a Stock Portfolio using Monte Carlo Simulation on individual stocks
 
-# Libraries (httr)
-install.packages(c("httr", "jsonlite"))
+rm(list = ls())
 library(httr)
 library(jsonlite)
-
-# Setup Environment
-setwd("/media/hyena0/G Vol/rproj/monte_carlo")
-
+library(car)
 
 # Generates a path through Geometric Brownian Motion
 # Requires : 
 # iter : Number of Iterations / Length of Path
 # mean : drift
 # sigma : volatility
+# interval : time interval between discrete steps
 # initial : Initial Value of path
-GeomBrownian = function(iter, mean, sigma, initial){
-  interval = 1
-  
+GeomBrownian = function(iter, mean, sigma, interval, initial){
   path = vector(length=iter)
   path[1] = initial
   for(i in 2:iter){
@@ -33,27 +28,29 @@ GeomBrownian = function(iter, mean, sigma, initial){
 # iter : Number of Iterations / Length of Path
 # npaths : Number of Path to consider
 # prices : Price vector
+# lratio : log ratio of prices
 GetExpectedPath = function(iter, npaths, prices){
   price_len = length(prices)
-  # Percent Change
-  percent_change = vector(length=price_len-1)
+  interval = 1
+  
+  # Log ratios
+  lratio = vector(length=price_len-1)
   for (i in 1:price_len-1){
-    percent_change[i] = (prices[i+1] - prices[i])/prices[i]
+    lratio[i] = log(prices[i+1]) - log(prices[i])
   }
   
-  # Stats of Price
-  price_mean = mean(percent_change)
-  price_var = var(percent_change)
-  price_std = sd(percent_change)
-  drift = price_mean - (0.5*price_var)
+  # UMVUE's of drift and variance 
+  # as each lratio follows N(drift, variance)
+  drift = mean(lratio)
+  diffusion = sd(lratio)
   
   brownian = matrix(0, nrow = iter, ncol = npaths)
   for (i in 1:npaths){
-    brownian[,i] = GeomBrownian(iter, drift, price_std, prices[price_len])
+    brownian[,i] = GeomBrownian(iter, drift, diffusion, interval, prices[price_len])
   }
   
-  # Geometric Mean of all Paths
-  exp_path <- apply(brownian, 1, function(x) (prod(x[x!=0]))^(1/sum(x!=0)))
+  # Mean of all Paths will estimate the true path as per Monte Carlo Simulation
+  exp_path = rowMeans(brownian)
   return(exp_path)
 }
 
@@ -76,7 +73,7 @@ PriceData = function(symbol){
   data = vector(length=252)
   for (i in 1:252){
     # Handle Null Price Data
-    if (i > 0 && 
+    if (i > 1 && 
         (is.null(parsed$prices[i][[1]]$close) || 
         is.na(parsed$prices[i][[1]]$close))) {
       data[i] = data[i-1]
@@ -91,7 +88,7 @@ PriceData = function(symbol){
 # Get Portfolio
 portfolio = read.csv("portfolio.csv", header=TRUE, sep=",")
 View(portfolio)
-portfolio_size = length(portfolio)
+portfolio_size = nrow(portfolio)
 
 stocks = portfolio$Symbol
 qty = as.integer(portfolio$Quantity.Available)
@@ -135,6 +132,52 @@ cat("If Amount 100 were invested in the Portfolio and Nifty it will be ",
     nifty[252]*100/nifty[1], " in Nifty")
 
 
+## Prediction
+# Testing Assumptions of Geometric Brownian Motion : 
+# 1. log ratios are normally distributed with constant mean (drift) and 
+#     constant variance (diffusion)
+# 2. log ratios are independent 
+
+# log ratio matrix
+prices.lratio = matrix(0, nrow = nrow(prices) - 1, ncol = ncol(prices))
+for (i in 1:nrow(prices.lratio)){
+  prices.lratio[i,] = log(prices[i+1,]) - log(prices[i,])
+}
+
+par(mfrow = c(2,2))
+for (i in 1:length(stocks)){
+  temp_plot.name =stocks[i]
+  plot(prices.lratio[,i], xlab = temp_plot.name, ylab = "Log Ratio", 
+       col = "blue", type = "l")
+}
+for (i in 1:length(stocks)){
+  temp_plot.name =stocks[i]
+  hist(prices.lratio[,i], xlab = temp_plot.name, ylab = "Log Ratio", 
+       col = "blue")
+}
+for (i in 1:length(stocks)){
+  temp_plot.name =stocks[i]
+  qqnorm(y = prices.lratio[,i], pch = 1, frame=FALSE, main = temp_plot.name)
+  qqline(prices.lratio[,i], col = "steelblue", lwd = 2)
+}
+# From the QQ plots it is clear to see log ratios are roughly normal
+
+prices.shapiroW = c()
+for (i in 1:length(stocks)){
+  prices.shapiroW = append(prices.shapiroW, shapiro.test(prices.lratio[,i])$p.value)
+}
+prices.shapiroW
+
+# Testing Serial Independence in log ratios 
+prices.durbinW = c()
+for (i in 1:length(stocks)){
+  prices.durbinW = append(prices.durbinW, durbinWatsonTest(prices.lratio[,i]))
+}
+prices.durbinW
+# As all test values are close to 2, we can conclude there is no significant 
+# serial correlation in log ratios
+
+
 # Using Monte Carlo Simulation to get Expected paths of individual stocks
 predicted_prices = matrix(0, nrow=20, ncol=portfolio_size)
 
@@ -144,6 +187,7 @@ for (i in 1:portfolio_size){
 View(predicted_prices)
 
 # Plot Predicted Prices for Individual Stocks
+par(mfrow = c(1,1))
 matplot(predicted_prices, main="All Stocks prediction", xlab="Time", ylab="Value", type="l")
 legend("topleft", legend = stocks , col = 1:portfolio_size, lty = 1:portfolio_size, cex=0.5)
 
